@@ -29,4 +29,4 @@ gradle build --no-daemon
 3. Запусти игру — ты автор.
 
 ## Автор
-vany201847dody-art
+avirbeta
