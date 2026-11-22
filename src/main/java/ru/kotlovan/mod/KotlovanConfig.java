@@ -55,6 +55,7 @@ public class KotlovanConfig {
                 w.write("speedMul=" + k.getSpeedMul() + "\n");
                 w.write("killAuraRange=" + k.getKillAuraRange() + "\n");
                 w.write("timerMul=" + k.getTimerMul() + "\n");
+                w.write("velocityReduce=" + k.getVelocityReduce() + "\n");
                 w.write("name=" + k.getName() + "\n");
             }
         } catch (Exception ignored) {
@@ -114,6 +115,7 @@ public class KotlovanConfig {
                 case "speedMul": k.setSpeedMul(Double.parseDouble(val)); break;
                 case "killAuraRange": k.setKillAuraRange(Double.parseDouble(val)); break;
                 case "timerMul": k.setTimerMul(Integer.parseInt(val)); break;
+                case "velocityReduce": k.setVelocityReduce(Double.parseDouble(val)); break;
                 case "name": k.setName(val); break;
                 default: break;
             }

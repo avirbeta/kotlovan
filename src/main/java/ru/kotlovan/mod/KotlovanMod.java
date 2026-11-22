@@ -71,6 +71,14 @@ public class KotlovanMod implements ClientModInitializer {
         GUI_KEY = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "Открыть ClickGUI", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_RIGHT_SHIFT, CAT));
 
+        // Клавиши новых модулей регистрируем сразу, а не при первом тике:
+        // иначе они могут не появиться в меню управления.
+        KILLAURA_NEW_KEY = reg("KillAura [NW]", GLFW.GLFW_KEY_O);
+        FLY_NEW_KEY = reg("Fly [NW]", GLFW.GLFW_KEY_Q);
+        JESUS_NEW_KEY = reg("Jesus [NW]", GLFW.GLFW_KEY_ENTER);
+        ESP_NEW_KEY = reg("ESP [NW]", GLFW.GLFW_KEY_E);
+        TARGETHUD_NEW_KEY = reg("TargetHUD [NW]", GLFW.GLFW_KEY_M);
+
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             if (!configLoaded) {
                 configLoaded = true;
@@ -97,13 +105,6 @@ public class KotlovanMod implements ClientModInitializer {
     private static KeyBinding TARGETHUD_NEW_KEY;
 
     private static void handleFrameworkKeys() {
-        if (KILLAURA_NEW_KEY == null) {
-            KILLAURA_NEW_KEY = reg("KillAura [NW]", GLFW.GLFW_KEY_O);
-            FLY_NEW_KEY = reg("Fly [NW]", GLFW.GLFW_KEY_Q);
-            JESUS_NEW_KEY = reg("Jesus [NW]", GLFW.GLFW_KEY_ENTER);
-            ESP_NEW_KEY = reg("ESP [NW]", GLFW.GLFW_KEY_E);
-            TARGETHUD_NEW_KEY = reg("TargetHUD [NW]", GLFW.GLFW_KEY_M);
-        }
         ru.kotlovan.mod.module.ModuleManager mm = ru.kotlovan.mod.module.ModuleManager.getInstance();
         if (KILLAURA_NEW_KEY.wasPressed()) toggle(mm, "KillAura");
         if (FLY_NEW_KEY.wasPressed()) toggle(mm, "Fly");

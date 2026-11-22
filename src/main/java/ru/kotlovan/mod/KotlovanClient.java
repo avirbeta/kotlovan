@@ -119,22 +119,44 @@ public class KotlovanClient {
             player.setVelocity(v.x, 0.22, v.z);
         }
         if (this.safeWalk) {
-            player.setVelocity(player.getVelocity());
+            this.applySafeWalk(player);
         }
     }
 
     // ================ VELOCITY (анти-отброс) ================
     private void applyVelocity(ClientPlayerEntity player) {
+        // Меняем скорость только в момент получения урона, иначе игрок
+        // постоянно двигался бы медленнее обычного.
+        if (player.hurtTime <= 0) return;
         Vec3d v = player.getVelocity();
-        if (Math.abs(v.y) < 0.3 && v.y < 0) v = new Vec3d(v.x, v.y * (1.0 - this.velocityReduce), v.z);
-        player.setVelocity(v.x * (1.0 - this.velocityReduce * 0.5), v.y, v.z * (1.0 - this.velocityReduce * 0.5));
+        double keep = 1.0 - Math.max(0.0, Math.min(1.0, this.velocityReduce));
+        player.setVelocity(v.x * keep, v.y, v.z * keep);
     }
 
     // ================ NO WEB (не вязнуть в паутине) ================
     private void applyNoWeb(ClientPlayerEntity player) {
+        net.minecraft.util.math.BlockPos feet = player.getBlockPos();
+        boolean inWeb = this.mc.world.getBlockState(feet).getBlock().equals(Blocks.COBWEB)
+                || this.mc.world.getBlockState(feet.up()).getBlock().equals(Blocks.COBWEB);
+        if (!inWeb) {
+            return;
+        }
         player.stepHeight = 1.2f;
         Vec3d v = player.getVelocity();
-        player.setVelocity(v.x * 0.98, v.y, v.z * 0.98);
+        player.setVelocity(v.x, Math.max(v.y, -0.02), v.z);
+    }
+
+    // ================ SAFE WALK (не шагнуть с края) ================
+    private void applySafeWalk(ClientPlayerEntity player) {
+        if (!player.isOnGround()) return;
+        Vec3d v = player.getVelocity();
+        if (v.x == 0 && v.z == 0) return;
+        double nextX = player.getX() + v.x * 2.5;
+        double nextZ = player.getZ() + v.z * 2.5;
+        net.minecraft.util.math.BlockPos below = new net.minecraft.util.math.BlockPos(nextX, player.getY() - 0.6, nextZ);
+        if (this.mc.world.isAir(below)) {
+            player.setVelocity(v.x * 0.15, v.y, v.z * 0.15);
+        }
     }
 
     // ================ NUKER (реальное ломание блоков пакетами) ================
@@ -385,8 +407,7 @@ public class KotlovanClient {
                 e -> e instanceof LivingEntity
                         && e != player
                         && e.isAlive()
-                        && !(e instanceof PlayerEntity)
-                        && (e instanceof Monster)
+                        && (e instanceof PlayerEntity || e instanceof Monster)
         );
         LivingEntity target = null;
         double best = Double.MAX_VALUE;
@@ -477,6 +498,8 @@ public class KotlovanClient {
         float targetPitch = (float) -Math.toDegrees(Math.atan2(dy, Math.max(distXZ, 0.0001)));
 
         float turnSpeed = 6.0f;
+        float oldYaw = player.yaw;
+        float oldPitch = player.pitch;
         float newYaw = lerpAngle(player.yaw, targetYaw, turnSpeed);
         float newPitch = lerpFloat(player.pitch, targetPitch, turnSpeed * 0.7f);
 
@@ -484,8 +507,8 @@ public class KotlovanClient {
         player.pitch = newPitch;
         player.headYaw = newYaw;
         player.bodyYaw = newYaw;
-        player.prevYaw = player.yaw;
-        player.prevPitch = player.pitch;
+        player.prevYaw = oldYaw;
+        player.prevPitch = oldPitch;
     }
 
     private float lerpFloat(float from, float to, float maxStep) {
@@ -571,8 +594,10 @@ public class KotlovanClient {
             this.mc.cameraEntity = this.cameraStand;
             player.abilities.flying = true;
             player.noClip = true;
+            this.freecam = true;
             KotlovanMod.chat("§aFreecam §aВКЛ");
         } catch (Exception e) {
+            this.freecam = false;
             KotlovanMod.chat("§cFreecam: ошибка запуска");
         }
     }
@@ -710,6 +735,11 @@ public class KotlovanClient {
         // Скрыть GUI, если чит-меню открыто
         if (this.mc.currentScreen instanceof ClickGuiScreen) {
             this.mc.openScreen(null);
+        }
+        // Новые модули (KillAura/Fly/Jesus/ESP/TargetHUD) тоже выключаем.
+        try {
+            ru.kotlovan.mod.module.ModuleManager.getInstance().disableAll();
+        } catch (Throwable ignored) {
         }
         KotlovanMod.chat("§c⚠ ТРЕВОГА — все читы выключены!");
     }

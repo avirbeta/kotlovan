@@ -1,7 +1,6 @@
 package ru.kotlovan.mod.module.impl;
 
-import ru.kotlovan.mod.event.Event;
-import ru.kotlovan.mod.event.EventBus;
+import ru.kotlovan.mod.KotlovanMod;
 import ru.kotlovan.mod.event.EventUpdate;
 import ru.kotlovan.mod.module.EventTarget;
 import ru.kotlovan.mod.module.Module;
@@ -13,27 +12,26 @@ public class Panic extends Module {
 
     @Override
     protected void onEnable() {
-        // Экстренное скрытие: отключаем ВСЕ модули, обнуляем цели
+        // Сначала выключаем сам Panic, чтобы не было рекурсии.
+        setEnabled(false);
+
         ModuleManager mm = ModuleManager.getInstance();
-        for (Module m : mm.getModules()) {
-            if (m != this) {
-                m.setEnabled(false);
+        for (Module module : mm.getModules()) {
+            if (module != this) {
+                module.setEnabled(false);
             }
         }
 
-        // Отписываем весь клиент от шины событий — модули перестают реагировать
-        for (Module m : mm.getModules()) {
-            EventBus.getInstance().unregister(m);
-        }
+        // Legacy-клиент тоже гасим: Fly/Freecam/FullBright и т.д.
+        KotlovanMod.client().panic();
 
-        // Полностью деактивируем и панику
-        setEnabled(false);
+        // EventBus НЕ очищаем — иначе модули перестанут работать до перезапуска.
     }
 
-    // Паника срабатывает мгновенно при включении — onDisable не вызываем повторно
-    @EventTarget(priority = Event.Priority.HIGHEST)
+    @EventTarget
     public void onUpdate(EventUpdate event) {
-        if (!isEnabled()) return;
-        onEnable();
+        if (isEnabled()) {
+            onEnable();
+        }
     }
 }

@@ -36,9 +36,13 @@ public abstract class WorldRendererMixin {
                                      Matrix4f matrix4f, CallbackInfo ci) {
         try {
             KotlovanClient k = KotlovanMod.client();
-            if (!k.isEsp() && !k.isTracers()) return;
             MinecraftClient mc = MinecraftClient.getInstance();
             if (mc.world == null || mc.player == null) return;
+
+            // События нового фреймворка (KillAura target ESP, ESP-модуль и т.д.)
+            ru.kotlovan.mod.Kotlovan.getInstance().onRender3D(matrices, tickDelta, limitTime, matrix4f);
+
+            if (!k.isEsp() && !k.isTracers()) return;
 
             Vec3d camPos = camera.getPos();
             VertexConsumerProvider.Immediate vcp = this.bufferBuilders.getEntityVertexConsumers();

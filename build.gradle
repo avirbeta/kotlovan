@@ -8,7 +8,7 @@ sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
 
 archivesBaseName = 'kotlovan'
-version = '2.0'
+version = '2.1.0'
 group = 'ru.kotlovan.mod'
 
 repositories {
